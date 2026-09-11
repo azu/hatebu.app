@@ -4,7 +4,7 @@ cd "$(dirname "$0")/.."
 
 # Build both architectures before calling this script. Never publish a ZIP
 # labelled universal if either the app or its standalone CLI is single-arch.
-version="$(python3 scripts/package.py --check-version)"
+python3 scripts/package.py --check-version >/dev/null
 app="dist/HatebuSearch.app"
 for binary in "$app/Contents/MacOS/HatebuSearch" "$app/Contents/MacOS/hatebu" dist/workflow/hatebu; do
   lipo "$binary" -verify_arch arm64 x86_64
@@ -38,7 +38,7 @@ mkdir -p dist/release
 # This directory contains generated release assets only. Drop older archives so
 # a later build cannot upload stale versions through the CI artifact glob.
 rm -f dist/release/HatebuSearch-*-universal.zip
-archive="HatebuSearch-$version-universal.zip"
+archive="HatebuSearch-universal.zip"
 ditto -c -k --sequesterRsrc --keepParent "$app" "dist/release/$archive"
 cp dist/HatebuSearch.alfredworkflow dist/release/HatebuSearch.alfredworkflow
 cd dist/release

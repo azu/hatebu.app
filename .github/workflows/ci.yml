@@ -52,7 +52,7 @@ jobs:
         with:
           name: release-assets
           path: |
-            dist/release/HatebuSearch-*-universal.zip
+            dist/release/HatebuSearch-universal.zip
             dist/release/HatebuSearch.alfredworkflow
             dist/release/SHA256SUMS
           if-no-files-found: error
@@ -95,7 +95,7 @@ jobs:
           ダウンロードしたファイルは SHA256SUMS で確認できます。
           NOTES
           gh release create "$RELEASE_TAG" \
-            "HatebuSearch-${RELEASE_TAG#v}-universal.zip" \
+            HatebuSearch-universal.zip \
             HatebuSearch.alfredworkflow SHA256SUMS \
             --verify-tag --title "Hatebu Search $RELEASE_TAG" \
             --generate-notes --notes-file "$RUNNER_TEMP/release-notes.md"

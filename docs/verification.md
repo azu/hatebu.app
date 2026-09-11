@@ -24,6 +24,10 @@ CI 設定は actionlint と zizmor（offline）、シェルは ShellCheck、Pyth
 タグと VERSION の不一致が拒否されることも確認した。
 この時点で Git の remote は未登録。GitHub 上の CI 実行・Intel runner でのテスト・Release 公開はまだ行っていない。
 
+2026-09-12 に初回コミットを push し、[GitHub Actions](https://github.com/azu/hatebu.app/actions/runs/34619163031) の Apple Silicon / Intel のテスト、共通ビルド、配布ファイルの作成が成功した。
+README を短いインストールコマンドへ整理する際に、最新 Release の URL を固定できるよう ZIP 名を `HatebuSearch-universal.zip` に変更した。
+ローカルの配布 ZIP を使い、README の展開・`xattr` コマンドを一時フォルダーへ向けて bash と zsh で確認した。実アプリの配置先や起動状態は変更していない。
+
 ## 実データ
 
 公開アカウント `efcl` の `search.data` から **56,900 件**を取り込んだ。
