@@ -1,0 +1,101 @@
+name: Test, build and release
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+
+jobs:
+  test:
+    name: Test (${{ matrix.runner }})
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [macos-15, macos-15-intel]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Show toolchain
+        run: swift --version
+      - name: Test
+        run: bash scripts/test.sh
+
+  build:
+    name: Build universal app and workflow
+    needs: test
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Build and validate release version
+        env:
+          HATEBU_RELEASE_TAG: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
+        run: bash scripts/build.sh --universal
+      - name: Archive and verify
+        run: bash scripts/archive.sh
+      - name: Upload distributable files
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release-assets
+          path: |
+            dist/release/HatebuSearch-*-universal.zip
+            dist/release/HatebuSearch.alfredworkflow
+            dist/release/SHA256SUMS
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 14
+
+  publish:
+    name: Publish tagged release
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      # Publish only the artifacts from this run; do not execute repository code
+      # in the job that holds the write token.
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: release-assets
+          path: release-assets
+      - name: Verify downloaded files
+        working-directory: release-assets
+        run: sha256sum -c SHA256SUMS
+      - name: Create GitHub Release
+        working-directory: release-assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          cat > "$RUNNER_TEMP/release-notes.md" <<'NOTES'
+          macOS 14 以降。Apple Silicon / Intel 共通のアプリと Alfred Workflow です。
+
+          アプリ ZIP を展開し、HatebuSearch.app を Applications へ移動してください。
+          Alfred Workflow はアプリの設定からも追加できます。利用には Alfred Powerpack が必要です。
+
+          この配布には Developer ID 署名・Apple の公証を付けていません。
+          初回起動の手順と、対象アプリに限定した xattr の操作は README の「インストール」を参照してください。
+          ダウンロードしたファイルは SHA256SUMS で確認できます。
+          NOTES
+          gh release create "$RELEASE_TAG" \
+            "HatebuSearch-${RELEASE_TAG#v}-universal.zip" \
+            HatebuSearch.alfredworkflow SHA256SUMS \
+            --verify-tag --title "Hatebu Search $RELEASE_TAG" \
+            --generate-notes --notes-file "$RUNNER_TEMP/release-notes.md"

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+    <key>bundleid</key><string>info.azu.hatebusearch.alfred</string>
+    <key>name</key><string>Hatebu Search</string>
+    <key>description</key><string>公開はてなブックマークをローカル検索。古いキャッシュは裏で更新します。</string>
+    <key>createdby</key><string>azu</string>
+    <key>readme</key><string>最初に Hatebu Search アプリを開き、はてなユーザーを登録してください。
+
+hb 検索語: 保存済みの公開ブックマークを検索。
+Enter: ページを開く。
+Command + Enter: 候補を引き継いでアプリで続きを探す。
+
+アプリを閉じていても検索できます。キャッシュが古ければ結果を表示したまま同期し、更新後に再表示します。
+tag:タグ site:ドメイン after:YYYY-MM-DD before:YYYY-MM-DD で絞り込めます。
+</string>
+    <key>objects</key><array>
+        <dict>
+            <key>uid</key><string>SEARCH</string>
+            <key>type</key><string>alfred.workflow.input.scriptfilter</string>
+            <key>version</key><integer>3</integer>
+            <key>config</key><dict>
+                <key>keyword</key><string>hb</string>
+                <key>title</key><string>ブックマークを検索</string>
+                <key>subtext</key><string>タイトル・コメント・タグから検索</string>
+                <key>runningsubtext</key><string>保存済みのブックマークを検索しています…</string>
+                <key>argumenttype</key><integer>1</integer>
+                <key>withspace</key><true/>
+                <key>alfredfiltersresults</key><false/>
+                <key>script</key><string>exec ./hatebu alfred --limit 40 -- "$1"</string>
+                <key>scriptargtype</key><integer>1</integer>
+                <key>type</key><integer>0</integer>
+                <key>escaping</key><integer>102</integer>
+                <key>queuemode</key><integer>1</integer>
+                <key>queuedelaymode</key><integer>0</integer>
+                <key>queuedelayimmediatelyinitially</key><true/>
+                <key>queuedelaycustom</key><integer>0</integer>
+                <key>argumenttrimmode</key><integer>0</integer>
+            </dict>
+        </dict>
+        <dict>
+            <key>uid</key><string>OPEN</string>
+            <key>type</key><string>alfred.workflow.action.openurl</string>
+            <key>version</key><integer>1</integer>
+            <key>config</key><dict>
+                <key>url</key><string>{query}</string>
+                <key>browser</key><string></string>
+                <key>skipqueryencode</key><true/>
+            </dict>
+        </dict>
+    </array>
+    <key>connections</key><dict>
+        <key>SEARCH</key><array>
+            <dict><key>destinationuid</key><string>OPEN</string><key>modifiers</key><integer>0</integer><key>modifiersubtext</key><string></string><key>vitoclose</key><false/></dict>
+            <dict><key>destinationuid</key><string>OPEN</string><key>modifiers</key><integer>1048576</integer><key>modifiersubtext</key><string>アプリで続きを探す</string><key>vitoclose</key><false/></dict>
+        </array>
+    </dict>
+    <key>uidata</key><dict>
+        <key>SEARCH</key><dict><key>xpos</key><real>100</real><key>ypos</key><real>100</real></dict>
+        <key>OPEN</key><dict><key>xpos</key><real>400</real><key>ypos</key><real>100</real></dict>
+    </dict>
+</dict></plist>
