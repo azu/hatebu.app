@@ -29,6 +29,8 @@ jobs:
           persist-credentials: false
       - name: Show toolchain
         run: swift --version
+      - name: Test release command using local repositories
+        run: python3 scripts/test-release.py
       - name: Test
         run: bash scripts/test.sh
 

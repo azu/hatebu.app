@@ -6,6 +6,7 @@ macOS 14 以降、Swift 5.9 以降、Xcode Command Line Tools、Python 3 を使�
 
 ```sh
 bash scripts/test.sh
+python3 scripts/test-release.py
 bash scripts/build.sh
 ```
 
@@ -44,12 +45,17 @@ bash scripts/archive.sh
 `VERSION` と同じ番号の `v` タグを push した場合は、同じ検証を通して GitHub Releases へ公開する。
 公開用の書き込み権限は最後のジョブだけに与える。
 
-公開するバージョンを `VERSION` に記載し、その変更をコミットしてからタグを push する。
+`main` で次のいずれかを実行すると、`VERSION` の更新・リリースコミット・タグ作成・push をまとめて行う。
 
 ```sh
-git tag v0.1.1
-git push origin v0.1.1
+bash scripts/release.sh patch   # 0.1.1 → 0.1.2
+bash scripts/release.sh minor   # 0.1.1 → 0.2.0
+bash scripts/release.sh major   # 0.1.1 → 1.0.0
 ```
+
+実行前に変更をコミット・push しておく。
+未コミットの変更、`origin/main` との差分、同名タグがあれば停止する。
+`main` とタグは一緒に push する。署名や push に失敗した場合は停止し、できたコミットや変更はローカルに残す。
 
 タグと `VERSION` が違えばビルドを止める。
 既存タグを自動作成・移動しないよう、公開には [`gh release create --verify-tag`](https://cli.github.com/manual/gh_release_create) を使う。
