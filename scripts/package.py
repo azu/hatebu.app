@@ -39,12 +39,15 @@ def replace_copy(source, destination):
 for binary in ["HatebuSearch", "hatebu"]:
     replace_copy(args.bin_dir / binary, macos / binary)
 replace_copy(args.bin_dir / "hatebu", workflow / "hatebu")
+shutil.copy2(root / ".build/AppIcon.icns", resources / "AppIcon.icns")
+shutil.copy2(root / ".build/AppIcon.iconset/icon_256x256@2x.png", workflow / "icon.png")
 info = {
     "CFBundleExecutable": "HatebuSearch",
     "CFBundleIdentifier": "info.azu.hatebusearch",
     "CFBundleName": "Hatebu Search",
     "CFBundleDisplayName": "Hatebu Search",
     "CFBundlePackageType": "APPL",
+    "CFBundleIconFile": "AppIcon.icns",
     "CFBundleShortVersionString": version,
     "CFBundleVersion": version,
     "LSMinimumSystemVersion": "14.0",
@@ -62,6 +65,6 @@ with (workflow / "info.plist").open("wb") as f:
     plistlib.dump(workflow_info, f)
 archive = dist / "HatebuSearch.alfredworkflow"
 with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as z:
-    for file in [workflow / "hatebu", workflow / "info.plist"]:
+    for file in [workflow / "hatebu", workflow / "info.plist", workflow / "icon.png"]:
         z.write(file, file.name)
 shutil.copy2(archive, resources / archive.name)

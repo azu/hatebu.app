@@ -21,6 +21,7 @@ python3 scripts/package.py "${version_args[@]}"
 swift build "${build_args[@]}"
 bin_dir="$(swift build "${build_args[@]}" --show-bin-path)"
 codesign --force --sign - "$bin_dir/hatebu"
+bash scripts/build-icons.sh
 python3 scripts/package.py --bin-dir "$bin_dir"
 codesign --force --sign - dist/HatebuSearch.app
 codesign --verify --deep --strict dist/HatebuSearch.app

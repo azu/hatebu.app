@@ -152,6 +152,7 @@ import HatebuCore
         query = handoff.query
         if let id = handoff.bookmarkID { reference = try? BookmarkDatabase(paths: paths, readOnly: true).get([id]).first }
         NSApp.activate(ignoringOtherApps: true)
+        NotificationCenter.default.post(name: .focusSearch, object: nil)
     }
     func newConversation() {
         guard !isThinking else { return }

@@ -17,6 +17,8 @@ cmp "$app/Contents/Resources/HatebuSearch.alfredworkflow" dist/HatebuSearch.alfr
 python3 - <<'PY'
 from pathlib import Path
 import plistlib
+import subprocess
+import tempfile
 import zipfile
 
 version = Path("VERSION").read_text().strip()
@@ -24,6 +26,11 @@ app = Path("dist/HatebuSearch.app/Contents")
 info = plistlib.loads((app / "Info.plist").read_bytes())
 if info["CFBundleShortVersionString"] != version or info["CFBundleVersion"] != version:
     raise SystemExit("App version differs from VERSION; rebuild before archiving")
+icon = app / "Resources" / info["CFBundleIconFile"]
+if not icon.read_bytes().startswith(b"icns"):
+    raise SystemExit("App icon is missing or not an ICNS file")
+with tempfile.TemporaryDirectory(prefix="hatebu-icon-check-") as temporary:
+    subprocess.run(["iconutil", "-c", "iconset", str(icon), "-o", str(Path(temporary) / "AppIcon.iconset")], check=True)
 with zipfile.ZipFile("dist/HatebuSearch.alfredworkflow") as workflow:
     info = plistlib.loads(workflow.read("info.plist"))
     if info["version"] != version:
@@ -32,6 +39,8 @@ with zipfile.ZipFile("dist/HatebuSearch.alfredworkflow") as workflow:
         raise SystemExit("App and archived workflow contain different CLIs")
     if not (workflow.getinfo("hatebu").external_attr >> 16) & 0o111:
         raise SystemExit("Workflow CLI lost executable permissions")
+    if workflow.read("icon.png") != Path(".build/AppIcon.iconset/icon_256x256@2x.png").read_bytes():
+        raise SystemExit("Workflow icon differs from the app icon source")
 PY
 
 mkdir -p dist/release

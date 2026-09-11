@@ -25,7 +25,6 @@ struct SearchView: View {
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: .focusSearch)) { _ in focusRequest += 1 }
-        .onAppear { focusRequest += 1 }
     }
 
     private var sidebar: some View {
@@ -85,7 +84,7 @@ struct SearchView: View {
             VStack(alignment: .leading, spacing: 15) {
                 HStack(spacing: 12) {
                     Image(systemName: "magnifyingglass").font(.title3).foregroundStyle(Color.bookmarkAccent)
-                    SearchField(text: $model.query, focusRequest: focusRequest) { action in
+                    SearchField(text: $model.query, focusRequest: focusRequest, allowsFocus: !model.showSettings) { action in
                         switch action {
                         case .previous: model.moveSelection(by: -1)
                         case .next: model.moveSelection(by: 1)

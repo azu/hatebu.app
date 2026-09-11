@@ -2,6 +2,7 @@ import SwiftUI
 import HatebuCore
 
 @main struct HatebuSearchApp: App {
+    @NSApplicationDelegateAdaptor(HatebuApplicationDelegate.self) private var appDelegate
     @StateObject private var model = SearchModel()
     var body: some Scene {
         WindowGroup("Hatebu Search") {
@@ -26,6 +27,13 @@ import HatebuCore
                 Button("ブックマークを更新") { model.synchronize(force: true) }.keyboardShortcut("r")
             }
         }
+    }
+}
+
+final class HatebuApplicationDelegate: NSObject, NSApplicationDelegate {
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        NotificationCenter.default.post(name: .focusSearch, object: nil)
+        return true
     }
 }
 
