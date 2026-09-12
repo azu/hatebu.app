@@ -115,29 +115,24 @@ struct SearchView: View {
                     if model.status.syncing { ProgressView().controlSize(.small) }
                 }.frame(maxWidth: .infinity,maxHeight: .infinity)
             } else {
-                ScrollViewReader { proxy in
-                    List(selection: $model.selectedID) {
-                        ForEach(model.visibleItems) { item in
-                            BookmarkRow(item: item, terms: terms, favicons: model.favicons) { model.open(item) }
-                                .tag(item.id).id(item.id)
-                                .listRowSeparator(.hidden)
-                                .padding(.vertical, 3)
-                                .contextMenu {
-                                    Button("ページを開く") { model.open(item) }.disabled(item.webURL == nil)
-                                    Button("URL をコピー") { model.copy(item) }
-                                    Divider()
-                                    Button("この候補に近い記事を探す") { model.useReference(item) }
-                                    Button("この候補を除いて探す") { model.exclude(item) }
-                                }
+                BufferedResultsList(items: model.visibleItems, selectedID: model.selectedID,
+                                    resetKey: [model.query, model.selectedUser ?? "", model.resultMode]) { action in
+                    switch action {
+                    case .previous: model.moveSelection(by: -1)
+                    case .next: model.moveSelection(by: 1)
+                    case .open: model.openSelected()
+                    }
+                } content: { item, focus in
+                    BookmarkRow(item: item, terms: terms, favicons: model.favicons,
+                                onSelect: { model.selectedID = item.id; focus() }, onOpen: { model.open(item) })
+                        .contextMenu {
+                            Button("ページを開く") { model.open(item) }.disabled(item.webURL == nil)
+                            Button("URL をコピー") { model.copy(item) }
+                            Divider()
+                            Button("この候補に近い記事を探す") { model.useReference(item) }
+                            Button("この候補を除いて探す") { model.exclude(item) }
                         }
-                    }.listStyle(.plain).padding(.horizontal, 10)
-                        .onKeyPress(.downArrow) { model.moveSelection(by: 1); return .handled }
-                        .onKeyPress(.upArrow) { model.moveSelection(by: -1); return .handled }
-                        .onKeyPress(.return) { model.openSelected(); return .handled }
-                        .onChange(of: model.selectedID) { _, id in
-                            if let id { proxy.scrollTo(id) }
-                        }
-                }
+                }.padding(.horizontal, 10)
             }
             if !model.visibleItems.isEmpty {
                 Divider()
@@ -273,16 +268,18 @@ struct SearchView: View {
     }
 }
 
-private struct BookmarkRow: View {
+struct BookmarkRow: View {
     let item: Bookmark
     let terms: [String]
     let favicons: FaviconCache
+    let onSelect: () -> Void
     let onOpen: () -> Void
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
             details
                 .contentShape(Rectangle())
                 .onTapGesture(count: 2, perform: onOpen)
+                .onTapGesture(perform: onSelect)
             Button(action: onOpen) {
                 HStack(spacing: 4) { Text("開く"); Image(systemName: "arrow.up.right") }
             }
@@ -291,21 +288,25 @@ private struct BookmarkRow: View {
             .accessibilityLabel("「\(item.title)」をブラウザで開く")
             .disabled(item.webURL == nil)
         }.padding(.vertical, 12).padding(.horizontal, 5)
+            .frame(maxWidth: .infinity)
+            .frame(height: ResultRowLayout.height, alignment: .top)
+            .clipped()
     }
     private var details: some View {
         HStack(alignment: .top,spacing: 12) {
             FaviconView(site: FaviconSite(pageURL: item.webURL), cache: favicons)
             VStack(alignment: .leading,spacing: 7) {
-                HighlightedText(text: item.title, terms: terms).font(.system(size: 15,weight: .medium)).lineLimit(2).fixedSize(horizontal: false,vertical: true)
-                HStack(spacing: 6) { HighlightedText(text: item.host, terms: terms).lineLimit(1); Text("·"); Text(String(item.date.prefix(10))) }.font(.system(size: 12)).foregroundStyle(Color.secondaryText)
-                if !item.comment.isEmpty { HighlightedText(text: item.comment, terms: terms).font(.system(size: 13)).foregroundStyle(.primary).lineLimit(2).lineSpacing(3) }
-                if !item.tags.isEmpty {
-                    HStack(spacing: 5) {
-                        ForEach(Array(item.tags.prefix(4).enumerated()),id: \.offset) { _,tag in
-                            HighlightedText(text: tag, terms: terms).font(.system(size: 11)).lineLimit(1).padding(.horizontal,6).padding(.vertical,3).background(.primary.opacity(0.05),in: RoundedRectangle(cornerRadius: 4))
-                        }
+                HighlightedText(text: item.title, terms: terms).font(.system(size: 15,weight: .medium)).lineLimit(2)
+                    .frame(height: 38, alignment: .topLeading)
+                HStack(spacing: 6) { HighlightedText(text: item.host, terms: terms).lineLimit(1); Text("·"); Text(String(item.date.prefix(10))) }
+                    .font(.system(size: 12)).foregroundStyle(Color.secondaryText).frame(height: 16, alignment: .top)
+                HighlightedText(text: item.comment, terms: terms).font(.system(size: 13)).foregroundStyle(.primary).lineLimit(2).lineSpacing(3)
+                    .frame(height: 36, alignment: .topLeading)
+                HStack(spacing: 5) {
+                    ForEach(Array(item.tags.prefix(4).enumerated()),id: \.offset) { _,tag in
+                        HighlightedText(text: tag, terms: terms).font(.system(size: 11)).lineLimit(1).padding(.horizontal,6).padding(.vertical,3).background(.primary.opacity(0.05),in: RoundedRectangle(cornerRadius: 4))
                     }
-                }
+                }.frame(height: 22, alignment: .top)
             }
             Spacer(minLength: 0)
         }.frame(maxWidth: .infinity, alignment: .leading)
