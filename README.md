@@ -16,7 +16,7 @@ open "$HOME/Applications/HatebuSearch.app"
 ```
 
 設定からはてなユーザー名を追加すると、公開ブックマークの取り込みが始まる。
-Alfred を使う場合は、設定の「Alfred Workflow を開く」から追加する（Powerpack が必要）。
+Alfred を使う場合は、設定の「Alfred Workflow を開く」から追加する（Alfred 5.5 以降と Powerpack が必要）。
 [起動できない場合・更新の補足](docs/troubleshooting.md)
 
 ## 使い方
@@ -25,6 +25,7 @@ Alfred を使う場合は、設定の「Alfred Workflow を開く」から追加
 ⌘F で検索欄へ移動、⌘R で更新、⌥⌘S でサイドバーを開閉する。
 
 **Alfred**：`hb 検索語` で検索し、Enter で開く。⌘Enter で検索語と候補をアプリへ渡す。
+⌥Enter でコメント全文を表示し、Esc で一覧へ戻る。
 アプリを閉じていても、同じ保存済みデータを検索できる。
 
 **Codex**：普段の Codex CLI で `codex login` を済ませ、アプリ右側に覚えている内容を入力して ⌘Enter で送信する。

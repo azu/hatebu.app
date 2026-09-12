@@ -9,7 +9,11 @@
 
 hb 検索語: 保存済みの公開ブックマークを検索。
 Enter: ページを開く。
+Option + Enter: コメント全文を表示。Esc で検索一覧に戻る。
 Command + Enter: 候補を引き継いでアプリで続きを探す。
+詳細画面でも Enter でページを開き、Command + Enter でアプリへ渡せます。
+
+Alfred 5.5 以降と Powerpack が必要です。
 
 アプリを閉じていても検索できます。キャッシュが古ければ結果を表示したまま同期し、更新後に再表示します。
 tag:タグ site:ドメイン after:YYYY-MM-DD before:YYYY-MM-DD で絞り込めます。
@@ -39,6 +43,42 @@ tag:タグ site:ドメイン after:YYYY-MM-DD before:YYYY-MM-DD で絞り込め�
             </dict>
         </dict>
         <dict>
+            <key>uid</key><string>DETAIL</string>
+            <key>type</key><string>alfred.workflow.userinterface.text</string>
+            <key>version</key><integer>1</integer>
+            <key>config</key><dict>
+                <key>inputtype</key><integer>0</integer>
+                <key>behaviour</key><integer>2</integer>
+                <key>fontmode</key><integer>0</integer>
+                <key>fontsizing</key><integer>0</integer>
+                <key>scriptinput</key><integer>0</integer>
+                <key>outputmode</key><integer>0</integer>
+                <key>spellchecking</key><integer>0</integer>
+                <key>stackview</key><true/>
+                <key>footertext</key><string>↩ 記事を開く · ⌘↩ アプリで続きを探す · Esc 一覧に戻る</string>
+            </dict>
+        </dict>
+        <dict>
+            <key>uid</key><string>OPEN_DETAIL</string>
+            <key>type</key><string>alfred.workflow.action.openurl</string>
+            <key>version</key><integer>1</integer>
+            <key>config</key><dict>
+                <key>url</key><string>{var:bookmark_url}</string>
+                <key>browser</key><string></string>
+                <key>skipqueryencode</key><true/>
+            </dict>
+        </dict>
+        <dict>
+            <key>uid</key><string>HANDOFF_DETAIL</string>
+            <key>type</key><string>alfred.workflow.action.openurl</string>
+            <key>version</key><integer>1</integer>
+            <key>config</key><dict>
+                <key>url</key><string>{var:bookmark_handoff}</string>
+                <key>browser</key><string></string>
+                <key>skipqueryencode</key><true/>
+            </dict>
+        </dict>
+        <dict>
             <key>uid</key><string>OPEN</string>
             <key>type</key><string>alfred.workflow.action.openurl</string>
             <key>version</key><integer>1</integer>
@@ -53,10 +93,18 @@ tag:タグ site:ドメイン after:YYYY-MM-DD before:YYYY-MM-DD で絞り込め�
         <key>SEARCH</key><array>
             <dict><key>destinationuid</key><string>OPEN</string><key>modifiers</key><integer>0</integer><key>modifiersubtext</key><string></string><key>vitoclose</key><false/></dict>
             <dict><key>destinationuid</key><string>OPEN</string><key>modifiers</key><integer>1048576</integer><key>modifiersubtext</key><string>アプリで続きを探す</string><key>vitoclose</key><false/></dict>
+            <dict><key>destinationuid</key><string>DETAIL</string><key>modifiers</key><integer>524288</integer><key>modifiersubtext</key><string>コメント全文を表示</string><key>vitoclose</key><true/></dict>
+        </array>
+        <key>DETAIL</key><array>
+            <dict><key>destinationuid</key><string>OPEN_DETAIL</string><key>modifiers</key><integer>0</integer><key>modifiersubtext</key><string>記事を開く</string><key>vitoclose</key><false/></dict>
+            <dict><key>destinationuid</key><string>HANDOFF_DETAIL</string><key>modifiers</key><integer>1048576</integer><key>modifiersubtext</key><string>アプリで続きを探す</string><key>vitoclose</key><false/></dict>
         </array>
     </dict>
     <key>uidata</key><dict>
         <key>SEARCH</key><dict><key>xpos</key><real>100</real><key>ypos</key><real>100</real></dict>
         <key>OPEN</key><dict><key>xpos</key><real>400</real><key>ypos</key><real>100</real></dict>
+        <key>DETAIL</key><dict><key>xpos</key><real>400</real><key>ypos</key><real>280</real></dict>
+        <key>OPEN_DETAIL</key><dict><key>xpos</key><real>700</real><key>ypos</key><real>230</real></dict>
+        <key>HANDOFF_DETAIL</key><dict><key>xpos</key><real>700</real><key>ypos</key><real>380</real></dict>
     </dict>
 </dict></plist>

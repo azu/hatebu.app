@@ -97,6 +97,10 @@ Codex の実行ファイルは一般的なインストール先から探し、�
 
 `hb 検索語` で CLI の Alfred JSON 出力を表示する。
 Enter で記事を開き、Command + Enter でその候補を参考にアプリで検索を続ける。
+一覧の subtitle はコメント本文を先にし、ドメイン・登録日を後ろへ置く。コメント先頭の連続した `[タグ]` は、保存済みのタグと一致するものだけ表示から除く。本文中の角括弧と保存データは変更しない。
+Option + Enter は、Alfred 5.5 以降の [Text View](https://www.alfredapp.com/help/workflows/user-interface/text/) に詳細を渡す。読み取り専用の Markdown 表示でコメント全文とタグ・登録日・ユーザー・URL を分け、stackview により Esc で元の一覧へ戻る。
+Script Filter の `mods.alt.arg` に詳細を入れ、記事 URL とアプリへの引き継ぎ URL は修飾キーの variables で別に渡す。詳細画面の Enter / Command + Enter はそれぞれの URL を開く。追加の CLI 起動・通信・一時ファイルは不要。
+保存された文字列は Markdown の記号をエスケープし、コメント内の画像・リンク・HTML を表示機能として解釈させない。設定・エラー・アプリへの案内行は詳細操作を無効にする。
 結果の末尾には、候補がゼロ件でも使える「アプリで続きを探す」を置く。
 CLI が URL scheme を生成し、アプリは検索語と候補 ID を読み取る。
 AI はアプリが開いただけでは実行せず、条件を入力して送信すると実行する。
