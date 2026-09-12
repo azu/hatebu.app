@@ -103,7 +103,8 @@ import HatebuCore
         }.value
         await refreshStatus()
     }
-    func openSelected() { if let url = selected?.webURL { openURL(url) } }
+    func open(_ item: Bookmark) { if let url = item.webURL { openURL(url) } }
+    func openSelected() { if let selected { open(selected) } }
     func moveSelection(by offset: Int) {
         guard !visibleItems.isEmpty else { return }
         let current = visibleItems.firstIndex { $0.id == selectedID }

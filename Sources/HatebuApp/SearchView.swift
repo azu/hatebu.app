@@ -118,13 +118,12 @@ struct SearchView: View {
                 ScrollViewReader { proxy in
                     List(selection: $model.selectedID) {
                         ForEach(model.visibleItems) { item in
-                            BookmarkRow(item: item, terms: terms)
+                            BookmarkRow(item: item, terms: terms) { model.open(item) }
                                 .tag(item.id).id(item.id)
                                 .listRowSeparator(.hidden)
                                 .padding(.vertical, 3)
-                                .onTapGesture(count: 2) { if let url = item.webURL { NSWorkspace.shared.open(url) } }
                                 .contextMenu {
-                                    Button("ページを開く") { if let url = item.webURL { NSWorkspace.shared.open(url) } }.disabled(item.webURL == nil)
+                                    Button("ページを開く") { model.open(item) }.disabled(item.webURL == nil)
                                     Button("URL をコピー") { model.copy(item) }
                                     Divider()
                                     Button("この候補に近い記事を探す") { model.useReference(item) }
@@ -277,7 +276,22 @@ struct SearchView: View {
 private struct BookmarkRow: View {
     let item: Bookmark
     let terms: [String]
+    let onOpen: () -> Void
     var body: some View {
+        HStack(alignment: .top, spacing: 10) {
+            details
+                .contentShape(Rectangle())
+                .onTapGesture(count: 2, perform: onOpen)
+            Button(action: onOpen) {
+                HStack(spacing: 4) { Text("開く"); Image(systemName: "arrow.up.right") }
+            }
+            .buttonStyle(.bordered).controlSize(.small).fixedSize()
+            .help("ブラウザで開く")
+            .accessibilityLabel("「\(item.title)」をブラウザで開く")
+            .disabled(item.webURL == nil)
+        }.padding(.vertical, 12).padding(.horizontal, 5)
+    }
+    private var details: some View {
         HStack(alignment: .top,spacing: 12) {
             Text(String(item.host.prefix(1)).uppercased()).font(.system(size: 14,weight: .semibold,design: .rounded))
                 .foregroundStyle(Color.bookmarkAccent).frame(width: 32,height: 36).background(Color.bookmarkGreen.opacity(0.08),in: RoundedRectangle(cornerRadius: 8))
@@ -294,7 +308,7 @@ private struct BookmarkRow: View {
                 }
             }
             Spacer(minLength: 0)
-        }.padding(.vertical, 12).padding(.horizontal, 5)
+        }.frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 

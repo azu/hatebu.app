@@ -198,6 +198,23 @@ final class SearchModelTests: XCTestCase {
         }
         XCTAssertNil(SearchKeyAction.resolve("insertTab:",hasMarkedText: false))
     }
+    @MainActor func testOpenRowUsesItsBookmarkWithoutRequiringSelection() {
+        let paths = DataPaths(directory: "/tmp/hatebu-row-open-tests-" + UUID().uuidString)
+        var opened: [URL] = []
+        let model = SearchModel(paths: paths, openURL: { opened.append($0) })
+        let one = Bookmark(user: "azu", title: "One", url: "https://example.com/one", comment: "", tags: [], date: "2026-09-01T00:00:00Z")
+        let two = Bookmark(user: "azu", title: "Two", url: "https://example.com/two", comment: "", tags: [], date: one.date)
+        model.items = [one, two]
+        model.open(two)
+        XCTAssertEqual(opened, [two.webURL!], "A row can be opened before anything is selected")
+        XCTAssertNil(model.selectedID)
+        model.selectedID = one.id
+        model.open(two)
+        XCTAssertEqual(opened, [two.webURL!, two.webURL!], "Open the clicked row, not the current selection")
+        XCTAssertEqual(model.selectedID, one.id)
+        model.open(Bookmark(user: "azu", title: "Invalid", url: "file:///tmp/local", comment: "", tags: [], date: one.date))
+        XCTAssertEqual(opened.count, 2, "Only web URLs may be opened")
+    }
     @MainActor private func waitForSearch(_ model: SearchModel) async throws {
         for _ in 0..<100 {
             if !model.isSearching { return }
