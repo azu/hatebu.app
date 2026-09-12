@@ -23,6 +23,11 @@ class ReleaseTests(unittest.TestCase):
                         GIT_COMMITTER_EMAIL="release@example.invalid")
         self.git("init", "--bare", str(self.remote))
         self.git("init", "-b", "main")
+        # Wait for Git's housekeeping before TemporaryDirectory removes either
+        # repository; detached maintenance can recreate objects/pack mid-cleanup.
+        for remote in [False, True]:
+            self.git("config", "maintenance.autoDetach", "false", remote=remote)
+            self.git("config", "gc.autoDetach", "false", remote=remote)
         (self.work / "scripts").mkdir()
         for name in ["release.sh", "package.py"]:
             shutil.copy2(Path(__file__).parent / name, self.work / "scripts" / name)
