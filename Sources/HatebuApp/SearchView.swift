@@ -5,6 +5,7 @@ struct SearchView: View {
     @ObservedObject var model: SearchModel
     @State private var focusRequest = 0
     @State private var toolsExpanded = true
+    @FocusState private var draftFocused: Bool
 
     var body: some View {
         HSplitView {
@@ -171,11 +172,15 @@ struct SearchView: View {
                     VStack(alignment: .leading, spacing: 20) {
                         if model.conversation.messages.isEmpty {
                             VStack(alignment: .leading, spacing: 14) {
-                                Text("言葉が出てこなくても。") .font(.system(size: 21,weight: .medium))
-                                Text("いつ読んだか、どんな内容だったか。\n覚えていることを手がかりに、\n保存した記事から一緒に探します。")
-                                    .font(.callout).foregroundStyle(Color.secondaryText).lineSpacing(6)
-                                suggestion("去年読んだ、日本語の解説だったと思う")
-                                suggestion("このテーマの入門記事を探したい")
+                                Text("時期や内容から、記事を探す").font(.system(size: 20,weight: .medium))
+                                Text("いつ見たか、何について、どんな記事か。\n覚えている部分だけでも探せます。")
+                                    .font(.system(size: 13)).foregroundStyle(Color.secondaryText).lineSpacing(5)
+                                Text("検索の例 · 選んで書き換えられます")
+                                    .font(.system(size: 11,weight: .medium)).foregroundStyle(Color.secondaryText).padding(.top, 4)
+                                suggestion("時期 ＋ 話題", text: "先月見た、React の新機能を解説した記事")
+                                suggestion("やりたいこと", text: "GitHub のイベントを記録して、あとから検索できるサービス")
+                                suggestion("覚えている内容", text: "JavaScript のエラー処理で、例外と Result 型を比較していた記事")
+                                suggestion("名前を忘れたツール", text: "dotfiles を自動でバックアップする CLI ツール。名前を忘れた")
                             }.padding(.top, 20)
                         }
                         ForEach(model.conversation.messages) { message in
@@ -210,8 +215,9 @@ struct SearchView: View {
                 }.font(.caption).foregroundStyle(Color.secondaryText).padding(10).background(Color.bookmarkGreen.opacity(0.06),in: RoundedRectangle(cornerRadius: 8)).padding(.horizontal, 18).padding(.bottom, 8)
             }
             VStack(alignment: .leading, spacing: 10) {
-                TextField("覚えていることを入力…",text: $model.draft,axis: .vertical)
+                TextField("例：先月見た React の解説記事",text: $model.draft,axis: .vertical)
                     .lineLimit(3...6).textFieldStyle(.plain).font(.system(size: 13)).padding(.top, 3)
+                    .focused($draftFocused)
                     .disabled(model.isStopping)
                 HStack {
                     Text("保存済みのブックマークから検索").font(.system(size: 11)).foregroundStyle(Color.secondaryText)
@@ -259,12 +265,20 @@ struct SearchView: View {
         case nil: return "circle"
         }
     }
-    private func suggestion(_ text: String) -> some View {
-        Button { model.draft = text } label: {
-            HStack(alignment: .top) { Text(text).multilineTextAlignment(.leading); Spacer(minLength: 5); Image(systemName: "arrow.up.left") }
-                .font(.caption).foregroundStyle(Color.secondaryText).padding(11).frame(maxWidth: .infinity,alignment: .leading)
+    private func suggestion(_ title: String, text: String) -> some View {
+        Button { model.draft = text; draftFocused = true } label: {
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    Text(title).font(.system(size: 11,weight: .semibold))
+                    Spacer(minLength: 5)
+                    Image(systemName: "arrow.down.left").font(.system(size: 11))
+                }.foregroundStyle(Color.secondaryText)
+                Text(text).font(.system(size: 13)).foregroundStyle(Color.primary)
+                    .multilineTextAlignment(.leading).lineSpacing(3).fixedSize(horizontal: false,vertical: true)
+            }
+                .padding(12).frame(maxWidth: .infinity,alignment: .leading)
                 .background(.primary.opacity(0.035),in: RoundedRectangle(cornerRadius: 9))
-        }.buttonStyle(.plain)
+        }.buttonStyle(.plain).help("この例を入力欄に入れて編集")
     }
 }
 
