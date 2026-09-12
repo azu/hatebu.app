@@ -25,6 +25,7 @@ import HatebuCore
     @Published var aiError: String?
     @Published var notice: String?
     let paths: DataPaths
+    let favicons: FaviconCache
     private let configuredCLI: String?
     private let configuredCodex: String?
     private let openURL: (URL) -> Void
@@ -42,6 +43,7 @@ import HatebuCore
 
     init(paths: DataPaths? = nil, cli: String? = nil, codex: String? = nil, openURL: ((URL) -> Void)? = nil) {
         self.paths = paths ?? DataPaths(directory: Self.dataDirectoryArgument)
+        self.favicons = FaviconCache(paths: self.paths)
         self.configuredCLI = cli; self.configuredCodex = codex
         self.openURL = openURL ?? { NSWorkspace.shared.open($0) }
         history = (try? ConversationStore(paths: self.paths).list()) ?? []
