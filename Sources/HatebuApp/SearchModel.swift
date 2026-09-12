@@ -126,11 +126,21 @@ import HatebuCore
             return query.terms + query.tags + (query.site.map { [$0] } ?? [])
         }))
     }
+    private var currentToolIssues: [SearchActivity] {
+        guard let run = conversation.lastRun else { return [] }
+        let activities = conversation.activities ?? []
+        // Older histories did not prefix item IDs with a turn ID.
+        let scoped = activities.contains { $0.id.contains(":") }
+        return activities.filter {
+            (!scoped || $0.id.hasPrefix(run.id.uuidString + ":")) && [.failed, .unconfirmed].contains($0.state)
+        }
+    }
+    var hasToolIssues: Bool { !currentToolIssues.isEmpty }
     var runTitle: String {
         if isStopping { return "検索を停止中" }
         if isThinking { return "検索中" }
         switch conversation.lastRun?.state {
-        case .completed: return "検索完了 · \(conversation.lastRun?.candidateCount ?? 0) 件の候補"
+        case .completed: return "\(hasToolIssues ? "回答完了" : "検索完了") · \(conversation.lastRun?.candidateCount ?? 0) 件の候補"
         case .failed: return "検索を完了できませんでした"
         case .stopped: return "検索を停止しました"
         case .interrupted, .running: return "前回の検索は中断されています"
@@ -140,7 +150,15 @@ import HatebuCore
     var runHint: String {
         if isThinking { return progress }
         switch conversation.lastRun?.state {
-        case .completed: return "候補を開くか、条件を追加して続けられます。"
+        case .completed:
+            if hasToolIssues {
+                let unconfirmed = currentToolIssues.filter { $0.state == .unconfirmed }.count
+                let failed = currentToolIssues.filter { $0.state == .failed }.count
+                let details = [unconfirmed > 0 ? "\(unconfirmed) 回が結果未確認" : nil,
+                               failed > 0 ? "\(failed) 回が失敗" : nil].compactMap { $0 }.joined(separator: "、")
+                return "検索ツールの \(details)です。候補は確認でき、条件を追加して再検索できます。"
+            }
+            return "候補を開くか、条件を追加して続けられます。"
         case .failed, .stopped, .interrupted, .running: return "見つかった候補は残っています。条件を変えて続けられます。"
         case nil: return ""
         }

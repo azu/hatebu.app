@@ -3,10 +3,15 @@
 #include <sys/wait.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <signal.h>
 
 int hatebu_exec_isolated(const char *executable, char *const arguments[]) {
     // Codex and its tool processes get their own group so Stop can cancel all of them.
     if (setsid() < 0 && getpgrp() != getpid()) return -1;
+    // Swift's async-main worker blocks signals. exec preserves that mask, so
+    // Codex would never receive SIGCHLD for its finished tool subprocesses.
+    sigset_t signals;
+    if (sigemptyset(&signals) < 0 || sigprocmask(SIG_SETMASK, &signals, NULL) < 0) return -1;
     execv(executable, arguments);
     return -1;
 }

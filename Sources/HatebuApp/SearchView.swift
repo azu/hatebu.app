@@ -242,7 +242,7 @@ struct SearchView: View {
             VStack(alignment: .leading, spacing: 7) {
                 HStack(spacing: 8) {
                     if model.isThinking { ProgressView().controlSize(.small) }
-                    else { Image(systemName: runIcon).foregroundStyle(model.conversation.lastRun?.state == .failed ? Color.orange : Color.bookmarkAccent) }
+                    else { Image(systemName: runIcon).foregroundStyle(model.conversation.lastRun?.state == .failed || model.hasToolIssues ? Color.orange : Color.bookmarkAccent) }
                     Text(model.runTitle).font(.system(size: 12, weight: .semibold))
                     Spacer(minLength: 5)
                     if let run = model.conversation.lastRun, let start = run.startedAt, model.isThinking || run.finishedAt != nil {
@@ -259,7 +259,7 @@ struct SearchView: View {
     }
     private var runIcon: String {
         switch model.conversation.lastRun?.state {
-        case .completed: return "checkmark.circle.fill"
+        case .completed: return model.hasToolIssues ? "exclamationmark.circle" : "checkmark.circle.fill"
         case .failed: return "exclamationmark.circle"
         case .stopped, .interrupted, .running: return "stop.circle"
         case nil: return "circle"

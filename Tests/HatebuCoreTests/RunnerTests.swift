@@ -13,14 +13,49 @@ final class RunnerTests: XCTestCase {
     }
     override func tearDownWithError() throws { try FileManager.default.removeItem(at: paths.root) }
 
-    func script(_ body: String) throws -> String {
+    func script(_ body: String, interpreter: String = "/bin/bash") throws -> String {
         let file = paths.root.appendingPathComponent("fake-codex")
-        try ("#!/bin/bash\n" + body).write(to: file, atomically: true, encoding: .utf8)
+        try ("#!\(interpreter)\n" + body).write(to: file, atomically: true, encoding: .utf8)
         try FileManager.default.setAttributes([.posixPermissions: 0o700],ofItemAtPath: file.path)
         return file.path
     }
     func request(_ executable: String) -> CodexRequest {
         CodexRequest(executable: executable,searchCLI: cli,paths: paths,conversation: Conversation(),question: "日本語で探す",candidates: [])
+    }
+    func testIsolatedLauncherReceivesChildExitSignals() async throws {
+        // Bash repairs its signal mask at startup, hiding this failure in shell
+        // fixtures. A directly executed runtime must receive SIGCHLD itself.
+        let executable = try script("""
+        import json, signal, subprocess, sys, time
+        sys.stdin.read()
+        blocked = signal.pthread_sigmask(signal.SIG_BLOCK, [])
+        assert not ({signal.SIGCHLD, signal.SIGTERM, signal.SIGINT} & blocked), 'Inherited blocked child-exit or cancellation signals'
+        exited = False
+        def child_exited(signum, frame):
+            global exited
+            exited = True
+        signal.signal(signal.SIGCHLD, child_exited)
+        child = subprocess.Popen(['/usr/bin/true'])
+        deadline = time.monotonic() + 2
+        while not exited and time.monotonic() < deadline:
+            time.sleep(0.01)
+        assert exited, 'No child-exit notification'
+        assert child.wait() == 0
+        answer = json.dumps({'message': '子プロセスの終了を確認', 'bookmarkIDs': []})
+        print(json.dumps({'type': 'item.completed', 'item': {'type': 'agent_message', 'text': answer}}))
+        print(json.dumps({'type': 'turn.completed'}))
+        """, interpreter: "/usr/bin/python3")
+        let done = expectation(description: "child exit observed")
+        let runner = CodexRunner()
+        runner.start(request(executable), onEvent: { _ in }, completion: { result in
+            switch result {
+            case .success(let answer): XCTAssertEqual(answer.message, "子プロセスの終了を確認")
+            case .failure(let error): XCTFail(error.localizedDescription)
+            }
+            done.fulfill()
+        })
+        await fulfillment(of: [done], timeout: 6)
+        runner.cancel(force: true)
     }
     func testRealPipeStreamingAndLargeStderr() async throws {
         let executable = try script("""

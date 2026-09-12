@@ -226,6 +226,7 @@ Microsoft の [UX design for agents](https://microsoft.design/articles/ux-design
 ツールの途中更新も読み取り、回答全体の完了と各操作の結果を別々に管理する。
 終了通知のない操作は「結果未確認」と表示し、失敗だったとは判断しない。
 実際に終了コードや失敗状態を受信した操作だけを「失敗」にする。
+今回の実行に未確認・失敗のツールが残っている場合、上部は「回答完了」と注意アイコンにし、未確認・失敗の件数を示す。過去の実行の問題は、新しい実行の完了表示に持ち越さない。
 `command_execution` の開始・完了イベントと、検索 CLI の JSON に含まれる検索語・件数が履歴の根拠となる。
 内部の思考過程は表示しない。記事本文を読んだかのような説明もしない。
 ツールの種別・状態は [Codex のイベント型](https://github.com/openai/codex/blob/main/sdk/typescript/src/items.ts)に沿って解釈する。
@@ -246,6 +247,7 @@ Microsoft の [UX design for agents](https://microsoft.design/articles/ux-design
 標準エラーは別に収集する。
 終了・失敗・停止を区別し、停止後に古い結果で画面を上書きしない。
 
+Codex の起動用 CLI は、プロセスグループを分けた後にシグナルのブロックを解除してから `execv` する。Swift の非同期処理から引き継いだブロック状態のままだと、Codex がツールの終了通知 `SIGCHLD` を受け取れない。[exec によるシグナル状態の継承](https://developer.apple.com/library/archive/documentation/System/Conceptual/ManPages_iPhoneOS/man2/execve.2.html)を考慮する。
 停止時は Codex とそこから起動したツールのプロセスグループへ終了を通知し、2 秒後も残っていれば強制終了する。
 1 回の検索が 180 秒を超えた場合も停止し、条件を絞って続けられることを案内する。
 全体の成功条件はプロセスの正常終了、`turn.completed`、構造化された最終回答の三つを受け取ることとする。

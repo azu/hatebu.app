@@ -148,14 +148,16 @@ final class SearchModelTests: XCTestCase {
         defer { model.shutdown() }
         XCTAssertFalse(model.isThinking)
         XCTAssertNil(model.aiError)
-        XCTAssertEqual(model.runTitle,"検索完了 · 0 件の候補")
+        XCTAssertEqual(model.runTitle,"回答完了 · 0 件の候補")
+        XCTAssertTrue(model.hasToolIssues)
+        XCTAssertTrue(model.runHint.contains("1 回が結果未確認"))
         XCTAssertEqual(model.conversation.activities?.first?.state,.unconfirmed)
         XCTAssertEqual(model.conversation.activities?.first?.toolName,"hatebu search")
         XCTAssertFalse(model.conversation.activities!.first!.title.contains("調べています"))
         let saved = try XCTUnwrap(ConversationStore(paths: paths).list().first)
         XCTAssertEqual(saved.lastRun?.state,.completed)
         model.restore(saved)
-        XCTAssertEqual(model.runTitle,"検索完了 · 0 件の候補")
+        XCTAssertEqual(model.runTitle,"回答完了 · 0 件の候補")
     }
     @MainActor func testLegacyCompletedAnswerDoesNotShowSearchingOrFalseFailures() throws {
         let paths = DataPaths(directory: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path)
@@ -164,12 +166,27 @@ final class SearchModelTests: XCTestCase {
         value.messages = [ChatMessage(role: "user",text: "アーカイブ"), ChatMessage(role: "assistant",text: "候補が見つかりました")]
         value.activities = [SearchActivity(id: "old-tool",title: "保存済みのブックマークを調べています",state: .failed)]
         model.restore(value)
-        XCTAssertEqual(model.runTitle,"検索完了 · 1 件の候補")
+        XCTAssertEqual(model.runTitle,"回答完了 · 1 件の候補")
         XCTAssertFalse(model.isThinking)
         XCTAssertEqual(model.conversation.activities?.first?.state,.unconfirmed)
         XCTAssertFalse(model.conversation.activities!.first!.title.contains("調べています"))
         model.newConversation()
         XCTAssertEqual(model.runTitle,"")
+    }
+    @MainActor func testCompletionSummaryOnlyWarnsAboutCurrentTurnToolIssues() {
+        let model = SearchModel(paths: DataPaths(directory: "/tmp/hatebu-summary-" + UUID().uuidString))
+        let run = SearchRun(state: .completed, candidateCount: 2)
+        model.conversation.lastRun = run
+        let previous = SearchActivity(id: UUID().uuidString + ":old", title: "以前の検索", state: .unconfirmed)
+        let currentID = run.id.uuidString + ":current"
+        model.conversation.activities = [previous, SearchActivity(id: currentID, title: "今回の検索", state: .failed)]
+        XCTAssertEqual(model.runTitle, "回答完了 · 2 件の候補")
+        XCTAssertTrue(model.runHint.contains("1 回が失敗"))
+        XCTAssertFalse(model.runHint.contains("結果未確認"))
+        model.conversation.activities = [previous, SearchActivity(id: currentID, title: "今回の検索", state: .completed)]
+        XCTAssertFalse(model.hasToolIssues)
+        XCTAssertEqual(model.runTitle, "検索完了 · 2 件の候補")
+        XCTAssertEqual(model.runHint, "候補を開くか、条件を追加して続けられます。")
     }
     @MainActor func testKeyboardSelectionOpeningAndIMEPolicy() {
         let paths = DataPaths(directory: "/tmp/hatebu-keyboard-tests-" + UUID().uuidString)
