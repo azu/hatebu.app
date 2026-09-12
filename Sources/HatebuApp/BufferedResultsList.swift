@@ -38,6 +38,7 @@ struct BufferedResultsList<Content: View>: View {
                     VStack(spacing: 0) {
                         ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
                             ZStack(alignment: .topLeading) {
+                                Color.clear.accessibilityHidden(true)
                                 if rows.contains(index) {
                                     content(item) { focused = true }
                                         .background(selectedID == item.id ? Color.bookmarkGreen.opacity(0.18) : .clear,
